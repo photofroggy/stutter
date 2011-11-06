@@ -54,7 +54,7 @@ class BaseLogger(object):
         
         self.stamp = stamp or '%H:%M:%S|'
     
-    def _fname(self, timestamp):
+    def _fname(self, timestamp, **kwargs):
         """ Return a file name based on the given input. """
         return '{0}/{1}.txt'.format(self.save_folder, time.strftime('%Y-%m-%d', time.localtime(timestamp)))
     
@@ -77,7 +77,7 @@ class BaseLogger(object):
         if self.get_level() <= level:
             self.stdout(msg)
         
-        self.save(message, timestamp)
+        self.save(message, timestamp, **kwargs)
     
     def error(self, message, timestamp=None, **kwargs):
         """ Display an error message. """
@@ -111,7 +111,7 @@ class BaseLogger(object):
             **kwargs
         )
     
-    def save(self, message, timestamp=None):
+    def save(self, message, timestamp=None, **kwargs):
         """ Save the given message to a log file. """
         if not self.save_logs or not self.save_folder:
             return
@@ -119,7 +119,7 @@ class BaseLogger(object):
         if not os.path.exists(self.save_folder):
             os.mkdir(self.save_folder, 0o755)
         
-        with open(self._fname(timestamp), 'a') as file:
+        with open(self._fname(timestamp, **kwargs), 'a') as file:
             file.write('{0}{1}\n'.format(self.time(timestamp), message))
 
 
@@ -185,7 +185,7 @@ class BufferedLogger(BaseLogger):
         # closing files.
         while not self.queue.empty():
             item = self.queue.get()
-            fname = self._fname(item[3])
+            fname = self._fname(item[3], **item[4])
             
             try:
                 sdata[fname].append(item)
