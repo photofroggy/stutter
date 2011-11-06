@@ -1,7 +1,30 @@
-========
-Stutter
-========
+''' Reflex setup.
+'''
 
+from distutils.core import setup
+
+setup(name='stutter',
+    version='1.1',
+    description='Logging objects for Python apps.',
+    author='photofroggy',
+    author_email='froggywillneverdie@msn.com',
+    url='http://photofroggy.github.com/stutter/index.html',
+    packages=[
+        'stutter',
+        'stutter.test'
+    ],
+    platforms=['Any'],
+    classifiers=[
+        'Natural Language :: English',
+        'Development Status :: 4 - Alpha',
+        'Intended Audience :: Developers',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'License :: OSI Approved :: ISC License (ISCL)',
+        'Topic :: Utilities'
+    ],
+    long_description="""
 **Stutter** is my own idea for a simple logging lib. Objects in the package handle
 timestamps and logging to files automatically. Logging to files can be buffered,
 and even threaded, according to your application's needs.
@@ -77,5 +100,7 @@ Documentation
 =============
 
 I will write documentation when I can be arsed.
+"""
+)
 
-
+# EOF

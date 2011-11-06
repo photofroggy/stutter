@@ -35,6 +35,26 @@ class TestBufferedLogger(unittest.TestCase):
         self.logger.push()
         self.assertTrue(self.logger.queue.empty(),
             'BaseLogger did not try to save our messages on `push`')
+    
+    def test_flush(self):
+        """ Test that `push` is capable of flushing the entire queue. """
+        self.logger.message('Testing')
+        self.logger.message('Testing')
+        self.logger.message('Testing')
+        self.logger.message('Testing')
+        self.logger.message('Testing')
+        self.logger.message('Testing')
+        self.logger.message('Testing')
+        self.logger.message('Testing')
+        self.logger.message('Testing')
+        
+        self.logger.push(limit=1)
+        self.assertFalse(self.logger.queue.empty(),
+            '`push(limit=1)` flushed the entire queue')
+        
+        self.logger.push(limit=0)
+        self.assertTrue(self.logger.queue.empty(),
+            '`push(limit=0)` failed to flush queue')
 
 
 # EOF

@@ -17,4 +17,8 @@
         * Created a ThreadedLogger class.
         ** Mostly complete.
         * Created unit test for ThreadedLogger.
+        * Added `stutter.test.test_base_logger.TestBaseLogger.test_printing`.
+        * Created a unit test to test flushing with `push`.
+        * Added License, MANIFEST and setup.py.
+        * Updated readme.
 

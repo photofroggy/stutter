@@ -5,6 +5,7 @@
 '''
 
 import sys
+import time
 import unittest
 
 # stutter imports
@@ -47,6 +48,18 @@ class TestBaseLogger(unittest.TestCase):
         """
         self.logger.debug('Testing')
         self.assertFalse(self.called, 'BaseLogger called given output method at the wrong time')
+    
+    def test_printing(self):
+        """ Make sure the printing method is given the right text. """
+        t=time.time()
+        
+        def dummy(message):
+            self.assertEqual(message,
+                '{0} Test message\n'.format(self.logger.time(t)),
+                'Unexpected message given')
+        
+        self.logger.stdout = dummy
+        self.logger.message('Test message')
 
 
 # EOF

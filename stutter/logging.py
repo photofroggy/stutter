@@ -193,11 +193,10 @@ class BufferedLogger(BaseLogger):
                 sdata[fname] = []
                 sdata[fname].append(item)
             
-            if limit > iter+1:
-                iter+= 1
-                continue
+            iter+= 1
             
-            break
+            if limit == iter:
+                break
         
         # The following two lines make the above loop pointless save for the
         # purpose of syphoning the queue.
