@@ -8,4 +8,10 @@
         * Created BaseLogger class.
         * Created unit tests for BufferedLogger.
         * Created a bare BufferedLogger class.
+        ** Overridden BaseLogger's `display` method.
+        ** Created simplified `_display` method.
+        ** Created `_save` method.
+        ** Created implemented `push`.
+        * Created method `_fname` in `BaseLogger`.
+        * Made changes to methods in `BaseLogger` to make it easier to customise behaviour.
 

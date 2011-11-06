@@ -31,7 +31,6 @@ class BaseLogger(object):
     save_folder = None
     stamp = None
     
-    
     def __init__(self, stdout=None, stamp=None, level=None, save_folder=None, save_logs=True):
         
         if stdout is None:
@@ -53,6 +52,10 @@ class BaseLogger(object):
         
         self.stamp = stamp or '%H:%M:%S|'
     
+    def _fname(self, timestamp):
+        """ Return a file name based on the given input. """
+        return '{0}/{1}.txt'.format(self.save_folder, time.strftime('%Y-%m-%d', time.localtime(timestamp)))
+    
     def get_level(self):
         """ Return the current log level of the logger. """
         return self.level
@@ -65,7 +68,7 @@ class BaseLogger(object):
         """ Return the time formatted according to `stamp`. """
         return time.strftime(self.stamp, time.localtime(timestamp))
     
-    def display(self, level, message, timestamp=None):
+    def display(self, level, message, timestamp=None, **kwargs):
         """ Display the message on the screen. """
         msg = '{0}{1}\n'.format(self.time(timestamp), message)
         
@@ -74,29 +77,37 @@ class BaseLogger(object):
         
         self.save(message, timestamp)
     
-    def error(self, message, timestamp=None):
+    def error(self, message, timestamp=None, **kwargs):
         """ Display an error message. """
-        timestamp = timestamp or time.time()
-        message = 'ERROR| {0}'.format(message)
-        self.display(LEVEL.ERROR, message, timestamp)
+        self.display(LEVEL.ERROR,
+            'ERROR| {0}'.format(message),
+            timestamp or time.time(),
+            **kwargs
+        )
     
-    def warning(self, message, timestamp=None):
+    def warning(self, message, timestamp=None, **kwargs):
         """ Display a warning. """
-        timestamp = timestamp or time.time()
-        message = 'WARNING| {0}'.format(message)
-        self.display(LEVEL.WARNING, message, timestamp)
+        self.display(LEVEL.WARNING,
+            'WARNING| {0}'.format(message),
+            timestamp or time.time(),
+            **kwargs
+        )
     
-    def message(self, message, timestamp=None):
+    def message(self, message, timestamp=None, **kwargs):
         """ Display a message. """
-        timestamp = timestamp or time.time()
-        message = ' {0}'.format(message)
-        self.display(LEVEL.MESSAGE, message, timestamp)
+        self.display(LEVEL.MESSAGE,
+            ' {0}'.format(message),
+            timestamp or time.time(),
+            **kwargs
+        )
     
-    def debug(self, message, timestamp=None):
+    def debug(self, message, timestamp=None, **kwargs):
         """ Display a debug message. """
-        timestamp = timestamp or time.time()
-        message = 'DEBUG| {0}'.format(message)
-        self.display(LEVEL.DEBUG, message, timestamp)
+        self.display(LEVEL.DEBUG,
+            'DEBUG| {0}'.format(message),
+            timestamp or time.time(),
+            **kwargs
+        )
     
     def save(self, message, timestamp=None):
         """ Save the given message to a log file. """
@@ -105,34 +116,82 @@ class BaseLogger(object):
         
         if not os.path.exists(self.save_folder):
             os.mkdir(self.save_folder, 0o755)
-            
-        fname = '{0}/{1}.txt'.format(self.save_folder, time.strftime('%Y-%m-%d', time.localtime(timestamp)))
         
-        with open(fname, 'a') as file:
+        with open(self._fname(timestamp), 'a') as file:
             file.write('{0}{1}\n'.format(self.time(timestamp), message))
 
 
 class BufferedLogger(BaseLogger):
     """ Buffered logger.
         
-        This logging class does not instantly display and save messages.
-        Instead, messages are placed in a queue, and only displayed and saved
-        when the `push` method is called.
+        This logging class does not instantly save messages. Instead, messages
+        are placed in a queue, and only saved when the `push` method is called.
         
         Typically, no programs should use this class unless greater control is
-        needed when displaying and saving messages.
+        needed when saving messages.
     """
+    
+    queue = None
+    
+    def __init__(self, *args, **kwargs):
+        BaseLogger.__init__(self, *args, **kwargs)
+        self.queue = Queue()
+    
+    def _display(self, mute, message, timestamp, **kwargs):
+        """ Display the message. """
+        if mute:
+            return
+        
+        self.stdout('{0}{1}\n'.format(self.time(timestamp), message))
+    
+    def _save(self, fname, chunk):
+        """ Save multiple log messages to a single file. """
+        with open(fname, 'a') as file:
+            for data in chunk:
+                file.write('{0}{1}\n'.format(self.time(data[3]), data[2]))
+    
+    def display(self, level, message, timestamp=None, **kwargs):
+        """ Buffered display method. """
+        self._display(self.level > level, message, timestamp, **kwargs)
+        self.queue.put((self.level, level, message, timestamp or time.time(), kwargs))
     
     def push(self, limit=5):
         """ Push some queued items out of the queue.
             
-            This method causes queued items to be written to the given display
-            method, and to be saved to a file.
+            This method causes queued items to be written to be saved to a file.
             
             Only `limit` items will be pushed out of the queue. If `limit` is
             `0`, then all items will be pushed from the queue.
         """
-        pass
+        if limit < 0:
+            return
+        
+        if self.queue.empty():
+            return
+        
+        sdata = {}
+        iter = 0
+        
+        while not self.queue.empty():
+            item = self.queue.get()
+            fname = self._fname(item[3])
+            
+            if not fname in sdata:
+                sdata[fname] = []
+            
+            sdata[fname].append(item)
+            
+            if limit > iter+1:
+                iter+= 1
+                continue
+            
+            break
+        
+        if not self.save_logs:
+            return
+        
+        for fname in sdata:
+            self._save(fname, sdata[fname])
 
 
 # EOF
