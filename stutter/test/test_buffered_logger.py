@@ -12,7 +12,7 @@ from stutter.logging import LEVEL
 from stutter.logging import BufferedLogger
 
 
-class TestBaseLogger(unittest.TestCase):
+class TestBufferedLogger(unittest.TestCase):
     
     def dummy(self, msg=''):
         """ Dummy method used in place of `stdout.write`. """
