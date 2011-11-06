@@ -172,14 +172,18 @@ class BufferedLogger(BaseLogger):
         sdata = {}
         iter = 0
         
+        # First we sort the data we want into lists of messages that will be
+        # saved in the same file. This way we don't have to keep opening and
+        # closing files.
         while not self.queue.empty():
             item = self.queue.get()
             fname = self._fname(item[3])
             
-            if not fname in sdata:
+            try:
+                sdata[fname].append(item)
+            except KeyError:
                 sdata[fname] = []
-            
-            sdata[fname].append(item)
+                sdata[fname].append(item)
             
             if limit > iter+1:
                 iter+= 1
@@ -187,6 +191,8 @@ class BufferedLogger(BaseLogger):
             
             break
         
+        # The following two lines make the above loop pointless save for the
+        # purpose of syphoning the queue.
         if not self.save_logs:
             return
         
