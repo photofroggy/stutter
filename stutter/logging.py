@@ -19,8 +19,11 @@ class LEVEL:
 
 
 class BaseLogger(object):
-    """ Basic class used for logging. No buffering or threading is used
-        in this class.
+    """ Basic class used for logging.
+        
+        No buffering or threading is used in this class. Output messages given
+        to the different methods are instantly given to the provided output
+        method and saved to a log file in the desired log folder.
     """
     
     level = LEVEL.MESSAGE
@@ -62,55 +65,38 @@ class BaseLogger(object):
         """ Return the time formatted according to `stamp`. """
         return time.strftime(self.stamp, time.localtime(timestamp))
     
-    def display(self, message, timestamp=None):
+    def display(self, level, message, timestamp=None):
         """ Display the message on the screen. """
-        out = '{0}{1}\n'.format(self.time(timestamp), message)
-        self.stdout(out)
-        return len(out)
+        msg = '{0}{1}\n'.format(self.time(timestamp), message)
+        
+        if self.level <= level:
+            self.stdout(msg)
+        
+        self.save(message, timestamp)
     
     def error(self, message, timestamp=None):
         """ Display an error message. """
         timestamp = timestamp or time.time()
         message = 'ERROR| {0}'.format(message)
-        self.save(message, timestamp)
-        
-        if self.level <= LEVEL.ERROR:
-            return self.display(message, timestamp)
-        
-        return 0
+        self.display(LEVEL.ERROR, message, timestamp)
     
     def warning(self, message, timestamp=None):
         """ Display a warning. """
         timestamp = timestamp or time.time()
         message = 'WARNING| {0}'.format(message)
-        self.save(message, timestamp)
-        
-        if self.level <= LEVEL.WARNING:
-            return self.display(message, timestamp)
-        
-        return 0
+        self.display(LEVEL.WARNING, message, timestamp)
     
     def message(self, message, timestamp=None):
         """ Display a message. """
         timestamp = timestamp or time.time()
         message = ' {0}'.format(message)
-        self.save(message, timestamp)
-        
-        if self.level <= LEVEL.MESSAGE:
-            return self.display(message, timestamp)
-        
-        return 0
+        self.display(LEVEL.MESSAGE, message, timestamp)
     
     def debug(self, message, timestamp=None):
         """ Display a debug message. """
         timestamp = timestamp or time.time()
         message = 'DEBUG| {0}'.format(message)
-        self.save(message, timestamp)
-        
-        if self.level <= LEVEL.DEBUG:
-            return self.display(message, timestamp)
-        
-        return 0
+        self.display(LEVEL.DEBUG, message, timestamp)
     
     def save(self, message, timestamp=None):
         """ Save the given message to a log file. """
@@ -125,6 +111,28 @@ class BaseLogger(object):
         with open(fname, 'a') as file:
             file.write('{0}{1}\n'.format(self.time(timestamp), message))
 
+
+class BufferedLogger(BaseLogger):
+    """ Buffered logger.
+        
+        This logging class does not instantly display and save messages.
+        Instead, messages are placed in a queue, and only displayed and saved
+        when the `push` method is called.
+        
+        Typically, no programs should use this class unless greater control is
+        needed when displaying and saving messages.
+    """
+    
+    def push(self, limit=5):
+        """ Push some queued items out of the queue.
+            
+            This method causes queued items to be written to the given display
+            method, and to be saved to a file.
+            
+            Only `limit` items will be pushed out of the queue. If `limit` is
+            `0`, then all items will be pushed from the queue.
+        """
+        pass
 
 
 # EOF

@@ -5,4 +5,7 @@
 
     Build 1 () Whisper
         * Created unit tests for BaseLogger.
+        * Created BaseLogger class.
+        * Created unit tests for BufferedLogger.
+        * Created a bare BufferedLogger class.
 
