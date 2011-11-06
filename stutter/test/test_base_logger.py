@@ -8,6 +8,7 @@ import sys
 import unittest
 
 # stutter imports
+from stutter.logging import LEVEL
 from stutter.logging import BaseLogger
 
 
@@ -25,12 +26,12 @@ class TestBaseLogger(unittest.TestCase):
         """ Default logging level should be "message". Can have these values::
             * debug, message, warning, error.
         """
-        self.assertEqual(self.logger.get_level(), logging.LEVEL.MESSAGE,
+        self.assertEqual(self.logger.get_level(), LEVEL.MESSAGE,
             'BaseLogger uses unexpected default log level')
         
-        self.logger.set_level(logging.LEVEL.DEBUG)
+        self.logger.set_level(LEVEL.DEBUG)
         
-        self.assertEqual(self.logger.get_level(), logging.LEVEL.DEBUG,
+        self.assertEqual(self.logger.get_level(), LEVEL.DEBUG,
             'BaseLogger failed to set requested log level')
     
     def test_message(self):
