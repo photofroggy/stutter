@@ -8,6 +8,7 @@ import sys
 import time
 import os.path
 from Queue import Queue
+from threading import Thread
 
 
 class LEVEL:
@@ -72,7 +73,7 @@ class BaseLogger(object):
         """ Display the message on the screen. """
         msg = '{0}{1}\n'.format(self.time(timestamp), message)
         
-        if self.level <= level:
+        if self.get_level() <= level:
             self.stdout(msg)
         
         self.save(message, timestamp)
@@ -137,9 +138,9 @@ class BufferedLogger(BaseLogger):
         BaseLogger.__init__(self, *args, **kwargs)
         self.queue = Queue()
     
-    def _display(self, mute, message, timestamp, **kwargs):
+    def _display(self, lower, message, timestamp, **kwargs):
         """ Display the message. """
-        if mute:
+        if lower:
             return
         
         self.stdout('{0}{1}\n'.format(self.time(timestamp), message))
@@ -152,8 +153,9 @@ class BufferedLogger(BaseLogger):
     
     def display(self, level, message, timestamp=None, **kwargs):
         """ Buffered display method. """
-        self._display(self.level > level, message, timestamp, **kwargs)
-        self.queue.put((self.level, level, message, timestamp or time.time(), kwargs))
+        data = (self.get_level(), level, message, timestamp or time.time(), kwargs)
+        self._display(data[0] > data[1], data[2], data[3], **data[4])
+        self.queue.put(data)
     
     def push(self, limit=5):
         """ Push some queued items out of the queue.
