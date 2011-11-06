@@ -23,16 +23,12 @@ class TestBaseLogger(unittest.TestCase):
         self.logger = BufferedLogger(self.dummy, save_logs=False)
     
     def test_unbuffered(self):
-        """ Test whether or not the logger calls the expected stuff when
-            displaying messages.
-        """
+        """ Test if the logger queues items instead of printing straight off the bat. """
         self.logger.message('Testing.')
         self.assertFalse(self.called, 'BufferedLogger called given output method unexpectedly')
     
     def test_buffered(self):
-        """ Make sure the logger does not call the output method when it is not
-            expected to do so.
-        """
+        """ Test if the logger pushes the queue when we tell it to. """
         self.logger.message('Testing')
         self.logger.push()
         self.assertTrue(self.called, 'BaseLogger did not call the given output method')
