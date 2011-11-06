@@ -8,7 +8,6 @@ import sys
 import unittest
 
 # stutter imports
-from stutter.logging import LEVEL
 from stutter.logging import BufferedLogger
 
 
@@ -20,7 +19,7 @@ class TestBufferedLogger(unittest.TestCase):
     
     def setUp(self):
         self.called = False
-        self.logger = BufferedLogger(self.dummy)
+        self.logger = BufferedLogger(stdout=self.dummy)
         self.logger._save = self.dummy
     
     def test_unbuffered(self):

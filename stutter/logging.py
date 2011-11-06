@@ -9,6 +9,7 @@ import time
 import os.path
 from Queue import Queue
 from threading import Thread
+from threading import BoundedSemaphore
 
 
 class LEVEL:
@@ -20,9 +21,9 @@ class LEVEL:
 
 
 class BaseLogger(object):
-    """ Basic class used for logging.
+    """ Basic object used for logging.
         
-        No buffering or threading is used in this class. Output messages given
+        No buffering or threading is used in this object. Output messages given
         to the different methods are instantly given to the provided output
         method and saved to a log file in the desired log folder.
     """
@@ -125,18 +126,20 @@ class BaseLogger(object):
 class BufferedLogger(BaseLogger):
     """ Buffered logger.
         
-        This logging class does not instantly save messages. Instead, messages
+        This logging object does not instantly save messages. Instead, messages
         are placed in a queue, and only saved when the `push` method is called.
         
-        Typically, no programs should use this class unless greater control is
+        Typically, no programs should use this object unless greater control is
         needed when saving messages.
     """
     
     queue = None
+    default_push = None
     
-    def __init__(self, *args, **kwargs):
-        BaseLogger.__init__(self, *args, **kwargs)
+    def __init__(self, default_push=5, *args, **kwargs):
+        super(BufferedLogger, self).__init__(*args, **kwargs)
         self.queue = Queue()
+        self.default_push = default_push
     
     def _display(self, lower, message, timestamp, **kwargs):
         """ Display the message. """
@@ -157,7 +160,7 @@ class BufferedLogger(BaseLogger):
         self._display(data[0] > data[1], data[2], data[3], **data[4])
         self.queue.put(data)
     
-    def push(self, limit=5):
+    def push(self, limit=None):
         """ Push some queued items out of the queue.
             
             This method causes queued items to be written to be saved to a file.
@@ -165,6 +168,9 @@ class BufferedLogger(BaseLogger):
             Only `limit` items will be pushed out of the queue. If `limit` is
             `0`, then all items will be pushed from the queue.
         """
+        if limit is None:
+            limit = self.default_push
+        
         if limit < 0:
             return
         
@@ -200,6 +206,78 @@ class BufferedLogger(BaseLogger):
         
         for fname in sdata:
             self._save(fname, sdata[fname])
+
+
+class ThreadedLogger(BufferedLogger):
+    """ A logger which actively runs in a thread.
+        
+        As with the `BufferedLogger` object, messages are not instantly saved
+        to files. The difference here being that a thread is used to automate
+        calls to `push`.
+        
+        With this, application developers shouldn't have to worry about whether
+        or not all messages have been written to files.
+    """
+    
+    control = None
+    stop_loop = False
+    
+    def __init__(self, *args, **kwargs):
+        super(ThreadedLogger, self).__init__(*args, **kwargs)
+        self.level_lock = BoundedSemaphore()
+        self.stop_loop = False
+    
+    def get_level(self):
+        """ Return the current logging level. This blocks when threaded. """
+        self.level_lock.acquire()
+        l = self.level
+        self.level_lock.release()
+        return l
+    
+    def set_level(self, level):
+        """ Set the current logging level. This blocks when threaded. """
+        self.level_lock.acquire()
+        self.level = level
+        self.level_lock.release()
+    
+    def start(self):
+        """ Start logging things in a thread. """
+        self.stop_loop = False
+        self.control = Thread(target=self.main)
+        self.control.start()
+    
+    def stop(self):
+        """ Tell the logger to stop running in a thread. """
+        if self.control is None:
+            return
+        
+        self.stop_loop = True
+    
+    def join(self, *args, **kwargs):
+        """ Shortcut for `Thread.join`. """
+        if self.control is None or self.stop_loop is False:
+            return
+        
+        self.control.join(*args, **kwargs)
+    
+    def is_running(self):
+        """ Determine whether or not the logger is running in a thread. """
+        if self.control is None:
+            return False
+        
+        return self.control.is_alive()
+    
+    def main(self):
+        """ Main loop for the logger. """
+        while True:
+            time.sleep(2)
+            self.push()
+            if self.stop_loop:
+                break
+        
+        self.stop_loop = False
+        self.control = None
+    
 
 
 # EOF
